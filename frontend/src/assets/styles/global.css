@@ -1,0 +1,51 @@
+html {
+  box-sizing: border-box;
+}
+
+*::before,
+*,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  background-color: var(--dashboard-bg);
+  margin: 0;
+  font-family: var(--inter);
+  font-size: 16px;
+  line-height: 1.1875;
+}
+
+button {
+  font-family: var(--inter);
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 14px;
+  height: 40px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--filled-button-bg);
+  color: var(--filled-button-text-color);
+}
+
+button.transparent {
+  background-color: transparent;
+  color: var(--transparent-button-text-color);
+  border: 1px solid var(--main-border-color);
+}
+
+a {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--main-text-color);
+}
+
+p {
+  color: var(--main-text-color);
+  line-height: 22px;
+}
+
+span {
+  color: var(--titles-text-color);
+}
