@@ -1,9 +1,9 @@
-import styles from './style.module.css';
+import styles from './component.module.css';
 import logo from '../../assets/logo.svg';
 
 export function Header() {
   return (
-    <header className={styles.container}>
+    <div className={styles.container}>
       <div className={styles.info}>
         <a href="/" className={styles.logo}>
           <img src={logo} alt="logo" className={styles.logoImg} />
@@ -18,6 +18,6 @@ export function Header() {
         </button>
         <button type="button">Отчёт</button>
       </div>
-    </header>
+    </div>
   );
 }
