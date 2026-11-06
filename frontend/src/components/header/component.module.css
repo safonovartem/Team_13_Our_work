@@ -1,5 +1,6 @@
 .container {
   background-color: var(--panels-bg);
+  border-bottom: 1px solid var(--main-border-color);
   padding: 12px 24px;
   display: flex;
   justify-content: space-between;
