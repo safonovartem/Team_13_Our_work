@@ -1,0 +1,19 @@
+.container {
+  background-color: var(--properties-form-groups-bg);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 0.875em;
+}
+
+.inputFields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
