@@ -1,0 +1,19 @@
+.container {
+  position: relative;
+}
+
+.input.measured {
+  padding-right: 30px;
+}
+
+.propertyMeasureUnit {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--info-text-color);
+  text-transform: lowercase;
+  user-select: none;
+}
