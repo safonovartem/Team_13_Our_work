@@ -34,6 +34,9 @@
 }
 
 .resultsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
   height: 100%;
   min-height: 0;
   padding: 32px 32px 0 32px;
