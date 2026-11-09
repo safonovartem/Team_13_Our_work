@@ -1,0 +1,32 @@
+.resultsBlock {
+  background-color: var(--panels-bg);
+  border: 1px solid var(--main-border-color);
+  border-radius: 12px;
+  padding: 20px;
+  padding-top: 22.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.resultsBlock.important {
+  border-width: 2px;
+  border-color: var(--important-border-color);
+}
+
+.titleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-weight: 600;
+  color: var(--titles-text-color);
+}
+
+.resultInfoContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
