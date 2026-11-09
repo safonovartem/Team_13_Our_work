@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import styles from './component.module.css';
+import { Tag } from '../tag/component';
 
 interface ResultBlockProps {
   title: string;
@@ -18,6 +19,7 @@ export function ResultBlock({
     >
       <div className={styles.titleContainer}>
         <span className={styles.title}>{title}</span>
+        {isImportant && <Tag>Рекомендуется</Tag>}
       </div>
       <div className={styles.resultInfoContainer}>{children}</div>
     </div>
