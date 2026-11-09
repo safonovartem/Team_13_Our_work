@@ -13,7 +13,9 @@ export function Layout({ header, aside, children }: LayoutProps) {
     <div className={aside ? styles.layout : styles.layoutNoAside}>
       <header className={styles.headerArea}>{header}</header>
       {aside && <aside className={styles.asideArea}>{aside}</aside>}
-      <main className={styles.mainArea}>{children}</main>
+      <main className={styles.mainArea}>
+        <div className={styles.resultsContainer}>{children}</div>
+      </main>
     </div>
   );
 }
