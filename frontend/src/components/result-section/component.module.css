@@ -1,0 +1,10 @@
+.resultSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resultsLayout {
+  display: flex;
+  gap: 16px;
+}
