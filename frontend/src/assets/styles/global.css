@@ -66,6 +66,7 @@ span {
 }
 
 input {
+  background-color: var(--input-field-bg);
   width: 100%;
   font-weight: 500;
 }
@@ -88,4 +89,20 @@ input[type='number']::-webkit-inner-spin-button {
 input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+select {
+  background: var(--input-field-bg) url('../icons/dropdown-arrow.png') no-repeat
+    right 12px center;
+  border: 1px solid var(--main-border-color);
+  padding: 10.5px 12px;
+  padding-right: 28px;
+  border-radius: 8px;
+  -webkit-appearance: none; /* Стиль для Safari */
+  -moz-appearance: none; /* Стиль для Firefox */
+  appearance: none; /* Стиль для прочих браузеров */
+  font-family: var(--inter);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dropdown-text-color);
 }

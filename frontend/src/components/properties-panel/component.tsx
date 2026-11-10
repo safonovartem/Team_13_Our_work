@@ -1,3 +1,4 @@
+import { DropdownMenu } from '../dropdown-menu/component';
 import { MeaningNote } from '../meaning-note/component';
 import { PropertiesFormGroup } from '../properties-form-group/component';
 import { PropertyValueInputField } from '../property-value-input-field/component';
@@ -12,6 +13,11 @@ export function PropertiesPanel() {
         <h3 className={styles.title}>Параметры</h3>
         <form action="#" className={styles.propertiesForm} id="properties-form">
           <PropertiesFormGroup title="Резервуар">
+            <SignedFormField title="Тип и объём">
+              <DropdownMenu
+                data={['РВС-2000 · 2 000 м³', 'РВС-5000 · 5 000 м³']}
+              />
+            </SignedFormField>
             <SignedFormField title="Уровень заполнения">
               <PropertyValueInputField measurementUnit="%" />
             </SignedFormField>
