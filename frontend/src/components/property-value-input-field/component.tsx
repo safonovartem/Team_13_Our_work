@@ -1,18 +1,20 @@
 import styles from './component.module.css';
 
 interface PropertyValueInputFieldProps {
+  type: 'number' | 'text';
   measurementUnit?: string;
   id?: string;
 }
 
 export function PropertyValueInputField({
+  type,
   measurementUnit,
   id,
 }: PropertyValueInputFieldProps) {
   return (
     <div className={styles.container}>
       <input
-        type="number"
+        type={type}
         id={id}
         className={`${styles.input} ${measurementUnit ? styles.measured : ''}`}
       />

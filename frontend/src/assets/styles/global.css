@@ -66,12 +66,14 @@ span {
 }
 
 input {
+  font-family: var(--inter);
   background-color: var(--input-field-bg);
   width: 100%;
   font-weight: 500;
 }
 
-input[type='number'] {
+input[type='number'],
+input[type='text'] {
   font-size: 0.875em;
   border: 1px solid var(--main-border-color);
   border-radius: 8px;
