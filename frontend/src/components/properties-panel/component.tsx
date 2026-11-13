@@ -3,7 +3,6 @@ import { MeaningNote } from '../meaning-note/component';
 import { PropertiesFormGroup } from '../properties-form-group/component';
 import { PropertyValueInputField } from '../property-value-input-field/component';
 import { SignedFormField } from '../signed-form-field/component';
-import { TwoColumnLayout } from '../two-column-layout/component';
 import styles from './component.module.css';
 
 export function PropertiesPanel() {
@@ -24,14 +23,14 @@ export function PropertiesPanel() {
           </PropertiesFormGroup>
 
           <PropertiesFormGroup title="Защитная стенка">
-            <TwoColumnLayout>
+            <div className={styles.twoColumn}>
               <SignedFormField title="Высота стенки">
                 <PropertyValueInputField measurementUnit="м" />
               </SignedFormField>
               <SignedFormField title="Высота стенки">
                 <PropertyValueInputField measurementUnit="м" />
               </SignedFormField>
-            </TwoColumnLayout>
+            </div>
             <MeaningNote>
               Подтверждённый диапазон межстенного расстояния: 1,5–3 м
             </MeaningNote>
