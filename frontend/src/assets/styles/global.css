@@ -72,6 +72,10 @@ input {
   font-weight: 500;
 }
 
+input::placeholder {
+  font-size: 0.8em;
+}
+
 input[type='number'],
 input[type='text'] {
   font-size: 0.875em;
