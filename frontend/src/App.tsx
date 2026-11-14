@@ -1,16 +1,23 @@
+import { useState } from 'react';
 import { Header } from './components/header/component';
 import { Layout } from './components/layout/component';
 import { PropertiesPanel } from './components/properties-panel/component';
 import { ResultBlock } from './components/result-block/component';
 import { ResultSection } from './components/result-section/component';
 import { ResultString } from './components/result-string/component';
+import { FormValues, EMPTY_FORM } from './types';
 
 export function App() {
+  const [form, setForm] = useState<FormValues>(EMPTY_FORM);
+
   return (
-    <Layout header={<Header />} aside={<PropertiesPanel />}>
+    <Layout
+      header={<Header />}
+      aside={<PropertiesPanel values={form} onChange={setForm} />}
+    >
       <ResultSection title="Сравнение вариантов">
         <ResultBlock title="Без козырька">
-          <ResultString title="Доля перелива" value="31%" />
+          <ResultString title="Доля перелива" value="31 %" />
           <ResultString title="Стоимость" value="12 млн ₽" />
           <ResultString title="Безопасность" value="Низкая" />
           <ResultString title="Реализуемость" value="Высокая" />
