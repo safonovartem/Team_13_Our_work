@@ -7,15 +7,30 @@ import { ResultSection } from './components/result-section/component';
 import { ResultString } from './components/result-string/component';
 import { FormValues, EMPTY_FORM, CalculationResult } from './types';
 import { ResultPlaceholder } from './components/result-placeholder/component';
+import { calculate } from './mock-api';
 
 export function App() {
   const [form, setForm] = useState<FormValues>(EMPTY_FORM);
   const [result, setResult] = useState<CalculationResult | null>(null);
 
+  const handleSubmit = async (values: FormValues) => {
+    try {
+      const data = await calculate(values);
+      setResult(data);
+    } finally {
+    }
+  };
+
   return (
     <Layout
       header={<Header />}
-      aside={<PropertiesPanel values={form} onChange={setForm} />}
+      aside={
+        <PropertiesPanel
+          values={form}
+          onChange={setForm}
+          onSubmit={handleSubmit}
+        />
+      }
     >
       {!result && <ResultPlaceholder title="Результаты расчёта" />}
       {result && (

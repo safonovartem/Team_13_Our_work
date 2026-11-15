@@ -14,17 +14,31 @@ import styles from './component.module.css';
 interface PropertiesPanelProps {
   values: FormValues;
   onChange: (next: FormValues) => void;
+  onSubmit: (values: FormValues) => void;
 }
 
-export function PropertiesPanel({ values, onChange }: PropertiesPanelProps) {
+export function PropertiesPanel({
+  values,
+  onChange,
+  onSubmit,
+}: PropertiesPanelProps) {
   const setField = (name: FieldName) => (raw: string | number) =>
     onChange({ ...values, [name]: raw });
+
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    onSubmit(values);
+  };
 
   return (
     <div className={styles.container}>
       <section className={styles.propertiesSection}>
         <h3 className={styles.title}>Параметры</h3>
-        <form action="#" className={styles.propertiesForm} id="properties-form">
+        <form
+          onSubmit={handleSubmit}
+          className={styles.propertiesForm}
+          id="properties-form"
+        >
           <PropertiesFormGroup title="Резервуар">
             <SignedFormField title="Название объекта">
               <PropertyValueInputField
