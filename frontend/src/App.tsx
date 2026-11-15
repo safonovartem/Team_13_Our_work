@@ -8,6 +8,27 @@ import { ResultString } from './components/result-string/component';
 import { FormValues, EMPTY_FORM, CalculationResult } from './types';
 import { ResultPlaceholder } from './components/result-placeholder/component';
 import { calculate } from './mock-api';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+);
 
 export function App() {
   const [form, setForm] = useState<FormValues>(EMPTY_FORM);
@@ -54,6 +75,30 @@ export function App() {
               </ResultBlock>
             );
           })}
+          <ResultBlock title="Доля перелива от высоты стенки">
+            <Line
+              data={{
+                datasets: [
+                  {
+                    data: [
+                      [0.7, 10],
+                      [0.97, 0],
+                      [1.1, 0],
+                    ],
+                    label: 'I = 3.0 м',
+                  },
+                ],
+              }}
+              options={{
+                scales: {
+                  x: {
+                    beginAtZero: false,
+                    type: 'linear',
+                  },
+                },
+              }}
+            />
+          </ResultBlock>
         </ResultSection>
       )}
     </Layout>
