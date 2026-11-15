@@ -15,11 +15,13 @@ interface PropertiesPanelProps {
   values: FormValues;
   onChange: (next: FormValues) => void;
   onSubmit: (values: FormValues) => void;
+  onReset: () => void;
 }
 
 export function PropertiesPanel({
   values,
   onChange,
+  onReset,
   onSubmit,
 }: PropertiesPanelProps) {
   const setField = (name: FieldName) => (raw: string | number) =>
@@ -30,12 +32,15 @@ export function PropertiesPanel({
     onSubmit(values);
   };
 
+  const resetForm = (e: React.ReactEventHandler<HTMLFormElement>) => {};
+
   return (
     <div className={styles.container}>
       <section className={styles.propertiesSection}>
         <h3 className={styles.title}>Параметры</h3>
         <form
           onSubmit={handleSubmit}
+          onReset={onReset}
           className={styles.propertiesForm}
           id="properties-form"
         >

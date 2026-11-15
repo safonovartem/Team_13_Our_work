@@ -50,6 +50,7 @@ export function App() {
           values={form}
           onChange={setForm}
           onSubmit={handleSubmit}
+          onReset={() => setForm(EMPTY_FORM)}
         />
       }
     >
