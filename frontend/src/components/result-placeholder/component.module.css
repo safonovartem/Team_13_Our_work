@@ -1,0 +1,28 @@
+.placeholderSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  background-color: var(--panels-bg);
+  border-radius: 12px;
+  flex-basis: 40%;
+}
+
+.placeholderTitle {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.placeholderMessage {
+  color: var(--info-text-color);
+  text-align: center;
+}
