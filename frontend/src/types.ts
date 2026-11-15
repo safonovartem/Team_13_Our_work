@@ -1,3 +1,21 @@
+// Результаты
+
+export type ResultItem = {
+  title: string
+  value: string
+}
+
+export type ResultBlock = {
+  id: string
+  title: string
+  isImportant?: boolean
+  items: ResultItem[]
+}
+
+export type CalculationResult = {
+  variants: ResultBlock[]
+}
+
 // Форма параметров
 
 export type FieldName =
