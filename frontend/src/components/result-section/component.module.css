@@ -7,5 +7,5 @@
 .resultsLayout {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 24px 16px;
 }
