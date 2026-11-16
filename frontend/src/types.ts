@@ -1,3 +1,5 @@
+import { ChartDataset, Point } from 'chart.js'
+
 // Результаты
 
 export type ResultItem = {
@@ -12,8 +14,14 @@ export type ResultBlock = {
   items: ResultItem[]
 }
 
+export type ChartBlock = {
+  title: string
+  datasets: ChartDataset<'line', ([number, number] | Point | null)[]>[]
+}
+
 export type CalculationResult = {
   variants: ResultBlock[]
+  charts: ChartBlock[]
 }
 
 // Форма параметров
