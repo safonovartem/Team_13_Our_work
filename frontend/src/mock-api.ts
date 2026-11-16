@@ -42,6 +42,30 @@ export function calculate(form: FormValues): Promise<CalculationResult> {
             ],
           },
         ],
+
+        charts: [
+          {
+            title: 'Доля перелива от высоты стенки',
+            datasets: [
+              {
+                data: [
+                  { x: 0.7, y: 10 },
+                  { x: 0.96, y: 0 },
+                  { x: 1.1, y: 0 },
+                ],
+                label: 'I = 3.0 м',
+              },
+              {
+                data: [
+                  [0.7, 12],
+                  [0.98, 0],
+                  [1.1, 0],
+                ],
+                label: 'I = 2.4 м',
+              },
+            ],
+          },
+        ],
       })
     }, DELAY_MS)
   })
