@@ -24,15 +24,13 @@ export function PropertiesPanel({
   onReset,
   onSubmit,
 }: PropertiesPanelProps) {
-  const setField = (name: FieldName) => (raw: string | number) =>
+  const setField = (name: FieldName) => (raw: string | number | null) =>
     onChange({ ...values, [name]: raw });
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(values);
   };
-
-  const resetForm = (e: React.ReactEventHandler<HTMLFormElement>) => {};
 
   return (
     <div className={styles.container}>
@@ -45,123 +43,38 @@ export function PropertiesPanel({
           id="properties-form"
         >
           <PropertiesFormGroup title="Резервуар">
-            <SignedFormField title="Название объекта">
-              <PropertyValueInputField
-                value={values.objectName}
-                onChange={setField('objectName')}
-              />
-            </SignedFormField>
             <SignedFormField title="Тип и объём">
               <DropdownMenu
                 data={TANK_TYPES}
-                value={values.objectType}
+                value={values.objectType!}
                 onChange={setField('objectType')}
               />
             </SignedFormField>
-            <SignedFormField title="Диаметр">
+            <SignedFormField title="Межстенное расстояние">
               <PropertyValueInputField
                 type="number"
                 measurementUnit="м"
-                value={values.objectDiameter}
-                onChange={setField('objectDiameter')}
+                value={values.clearanceL}
+                onChange={setField('clearanceL')}
               />
             </SignedFormField>
-            <div className={styles.twoColumn}>
-              <SignedFormField title="Ширина">
-                <PropertyValueInputField
-                  type="number"
-                  measurementUnit="м"
-                  value={values.objectWidth}
-                  onChange={setField('objectWidth')}
-                />
-              </SignedFormField>
-              <SignedFormField title="Высота">
-                <PropertyValueInputField
-                  type="number"
-                  measurementUnit="м"
-                  value={values.objectHeight}
-                  onChange={setField('objectHeight')}
-                />
-              </SignedFormField>
-              <SignedFormField title="Длина">
-                <PropertyValueInputField
-                  type="number"
-                  measurementUnit="м"
-                  value={values.objectLength}
-                  onChange={setField('objectLength')}
-                />
-              </SignedFormField>
-              <SignedFormField title="Объём">
-                <PropertyValueInputField
-                  type="number"
-                  measurementUnit="м³"
-                  value={values.objectVolume}
-                  onChange={setField('objectVolume')}
-                />
-              </SignedFormField>
-            </div>
-            <SignedFormField title="Материал">
-              <DropdownMenu
-                data={TANK_MATERIALS}
-                value={values.objectMaterial}
-                onChange={setField('objectMaterial')}
-              />
-            </SignedFormField>
-            <SignedFormField title="Толщина стены">
+            <SignedFormField title="Вылет горизонтального козырька">
               <PropertyValueInputField
                 type="number"
                 measurementUnit="м"
-                value={values.wallThickness}
-                onChange={setField('wallThickness')}
+                value={values.crestWidthB}
+                onChange={setField('crestWidthB')}
               />
             </SignedFormField>
-          </PropertiesFormGroup>
-
-          <PropertiesFormGroup title="Параметры содержимого">
-            <SignedFormField title="Тип жидкости">
-              <DropdownMenu
-                data={LIQUID_TYPES}
-                value={values.liquidType}
-                onChange={setField('liquidType')}
-              />
-            </SignedFormField>
-            <SignedFormField title="Плотность">
+            <SignedFormField
+              title="Вылет горизонтального козырька"
+              valueNoteMessage="Необязательное значение"
+            >
               <PropertyValueInputField
                 type="number"
-                measurementUnit="кг/м³"
-                value={values.liquidDensity}
-                onChange={setField('liquidDensity')}
-              />
-            </SignedFormField>
-            <SignedFormField title="Вязкость">
-              <PropertyValueInputField
-                type="number"
-                value={values.liquidViscosity}
-                onChange={setField('liquidViscosity')}
-              />
-            </SignedFormField>
-            <SignedFormField title="Температура">
-              <PropertyValueInputField
-                type="number"
-                measurementUnit="K"
-                value={values.liquidTemperature}
-                onChange={setField('liquidTemperature')}
-              />
-            </SignedFormField>
-            <SignedFormField title="Уровень заполнения">
-              <PropertyValueInputField
-                type="number"
-                measurementUnit="%"
-                value={values.fillLevel}
-                onChange={setField('fillLevel')}
-              />
-            </SignedFormField>
-            <SignedFormField title="Объём жидкости">
-              <PropertyValueInputField
-                type="number"
-                measurementUnit="м³"
-                value={values.liquidVolume}
-                onChange={setField('liquidVolume')}
+                measurementUnit="м"
+                value={values.plainWallHeight}
+                onChange={setField('plainWallHeight')}
               />
             </SignedFormField>
           </PropertiesFormGroup>

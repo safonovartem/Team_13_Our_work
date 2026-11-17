@@ -2,8 +2,8 @@ import styles from './component.module.css';
 
 interface PropertyValueInputFieldProps {
   type?: 'number' | 'text';
-  value: string | number;
-  onChange: (raw: string | number) => void;
+  value: string | number | null;
+  onChange: (raw: string | number | null) => void;
   placeholder?: string;
   measurementUnit?: string;
   id?: string;
@@ -29,9 +29,13 @@ export function PropertyValueInputField({
         name={name}
         disabled={disabled}
         placeholder={placeholder}
-        value={value}
+        value={value ?? ''}
         onChange={(e) =>
-          onChange(type === 'number' ? Number(e.target.value) : e.target.value)
+          onChange(
+            type === 'number' && e.target.value === ''
+              ? null
+              : Number(e.target.value),
+          )
         }
         className={`${styles.input} ${measurementUnit ? styles.measured : ''}`}
       />

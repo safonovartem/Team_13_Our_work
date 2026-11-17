@@ -46,7 +46,12 @@ export type FieldName =
   | 'fillLevel'
   | 'liquidVolume'
 
-export type FormValues = Record<FieldName, number | string>
+  // Параметры вычислительного ядра
+  | 'clearanceL'
+  | 'crestWidthB'
+  | 'plainWallHeight'
+
+export type FormValues = Record<FieldName, number | string | null>
 
 export const EMPTY_FORM: FormValues = {
   objectName: '',
@@ -64,11 +69,20 @@ export const EMPTY_FORM: FormValues = {
   liquidTemperature: 0,
   fillLevel: 100,
   liquidVolume: 0,
+
+  // Параметры вычислительного ядра
+  clearanceL: 3, // Межстенное расстояние
+  crestWidthB: 1, // Вылет горизонтального козырька
+  plainWallHeight: null, // Высота защитной стенки
 }
 
 export const TANK_TYPES = [
+  'РВС-700 · 700 м³',
   'РВС-2000 · 2 000 м³',
   'РВС-5000 · 5 000 м³',
+  'РВС-10000 · 10 000 м³',
+  'РВС-20000 · 20 000 м³',
+  'РВС-30000 · 30 000 м³',
 ] as const
 
 export const TANK_MATERIALS = ['Сталь'] as const

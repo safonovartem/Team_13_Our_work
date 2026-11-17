@@ -7,7 +7,7 @@ import { ResultSection } from './components/result-section/component';
 import { ResultString } from './components/result-string/component';
 import { FormValues, EMPTY_FORM, CalculationResult } from './types';
 import { ResultPlaceholder } from './components/result-placeholder/component';
-import { calculate } from './mock-api';
+import { calculate } from './api';
 import { ResultLineChart } from './components/result-line-chart/component';
 
 export function App() {
@@ -56,9 +56,9 @@ export function App() {
               </ResultBlock>
             );
           })}
-          {result.charts.map(({ title, datasets }) => {
+          {result.charts.map(({ title, datasets }, index) => {
             return (
-              <ResultBlock title={title}>
+              <ResultBlock key={index} title={title}>
                 <ResultLineChart datasets={datasets} />
               </ResultBlock>
             );
