@@ -1,13 +1,15 @@
 # Tank Safety Platform — backend
 
 Бэкенд системы «Tank Safety Platform» (ООО «АралИнжиниринг», команда 13):
-API на FastAPI, валидация пользователей и исходных данных, SQLite, тесты на pytest.
+API на FastAPI, валидация пользователей и исходных данных, SQLite, расчёты
+и графики, тесты на pytest.
 
-> **Границы ответственности.** В этом сервисе реализованы API, валидация,
-> пользователи, проекты и история версий исходных данных. **Вычислительное
-> ядро сюда не входит** — его реализует отдельный модуль. Бэкенд хранит
-> проверенные снимки исходных данных и отдаёт их вычислительному модулю
-> (см. раздел [«Интеграция с вычислительным модулем»](#интеграция-с-вычислительным-модулем)).
+> **Совместимость.** Вычислительное ядро взято из ветки
+> `feature/backend-calculations` (`app/core/`, код не переписан, а перенесён
+> без изменений). Форматы ответов расчётов и графиков соответствуют типам
+> ветки `feature/main-page`: `CalculationResult = { variants, charts }`,
+> `ChartBlock = { title, datasets }`, `ChartDataset = { label, data: [[x, y], ...] }`.
+> Подробности — в разделе [«Совместимость с ветками команды»](#совместимость-с-ветками-команды).
 
 ## Стек
 
@@ -15,7 +17,7 @@ API на FastAPI, валидация пользователей и исходн�
 - FastAPI + Pydantic v2
 - SQLite (стандартный модуль `sqlite3`, без ORM)
 - JWT (PyJWT), пароли — PBKDF2-HMAC-SHA256 (стандартная библиотека)
-- pytest + httpx (тесты)
+- pytest + httpx / httpx2 (тесты; `httpx2` используется новым `starlette.testclient`)
 
 ## Структура проекта
 
@@ -29,16 +31,24 @@ app/
 ├── errors.py            # доменные ошибки (404/409/400)
 ├── security.py          # хеширование паролей и JWT
 ├── validators.py        # правила валидации email/username/пароля
+├── core/                # вычислительное ядро из feature/backend-calculations
+│   ├── engine.py        # фасад run_engine (единственная точка входа)
+│   ├── catalog.py       # типоразмеры РВС по ГОСТ
+│   ├── contracts.py     # InputData / ResultData / WallResult / WaveData
+│   └── barriers/        # стратегии PlainWall и GWKWall
 ├── schemas/             # Pydantic-схемы запросов и ответов
 │   ├── auth.py
 │   ├── users.py
 │   ├── inputs.py        # исходные данные (объект, жидкость, среда)
 │   ├── projects.py
+│   ├── calculations.py  # параметры ядра, блоки интерфейса, графики
+│   ├── catalog.py
 │   └── common.py
-├── repositories/        # SQL-запросы (пользователи, проекты, версии)
+├── repositories/        # SQL-запросы (пользователи, проекты, расчёты)
+├── services/            # адаптация ядра, графики, проверка доступа
 ├── routers/             # HTTP-эндпоинты
 └── ...
-tests/                   # pytest: авторизация, пользователи, проекты, БД
+tests/                   # pytest: auth, пользователи, проекты, расчёты, графики, БД
 ```
 
 ## Быстрый старт
@@ -77,12 +87,15 @@ tests/                   # pytest: авторизация, пользовате�
 ```
 users               пользователи (роли user/admin, флаг активности)
   └─ projects       проекты пользователя (название, статус, текущие данные)
-       └─ project_versions   история версий исходных данных (JSON-снимки)
+       ├─ project_versions   история версий исходных данных (JSON-снимки)
+       └─ calculations       история расчётов (параметры, результат, графики)
 ```
 
 - Email и username уникальны **без учёта регистра** (`COLLATE NOCASE`).
 - Удаление пользователя каскадно удаляет его проекты, удаление проекта —
-  его версии (`ON DELETE CASCADE`).
+  его версии и расчёты (`ON DELETE CASCADE`).
+- Расчёт сохраняется отдельно от версии исходных данных: одинаковые данные
+  можно считать с разными значениями `l`, `b` и сценариями.
 - Пользователь не удаляется физически: `DELETE /api/users/{id}` деактивирует
   его, чтобы сохранить историю проектов.
 - Исходные данные хранятся как JSON и всегда проходят Pydantic-валидацию
@@ -90,8 +103,10 @@ users               пользователи (роли user/admin, флаг ак
 
 ## API
 
-Базовый префикс — `/api`. Все эндпоинты, кроме `/auth/register`, `/auth/login`
-и `/health`, требуют заголовок `Authorization: Bearer <token>`.
+Базовый префикс — `/api`. Авторизация (`Authorization: Bearer <token>`)
+требуется для всех эндпоинтов пользователей, проектов и истории расчётов.
+Публичные (без токена): `/auth/register`, `/auth/login`, `/health`,
+`/api/calculations`, `/api/charts`, `/api/catalog`.
 
 ### Аутентификация
 
@@ -129,9 +144,96 @@ users               пользователи (роли user/admin, флаг ак
 Проекты других пользователей недоступны и возвращают `404`, чтобы не
 раскрывать их существование.
 
+### Расчёты (вычислительное ядро)
+
+| Метод | Путь | Описание |
+|---|---|---|
+| `POST` | `/api/calculations` | расчёт по параметрам ядра (объём РВС, `l`, `b`, сценарии) |
+| `POST` | `/api/calculations/from-form` | расчёт по `FormValues` главной страницы (camelCase) |
+| `GET` | `/api/catalog` | типоразмеры РВС и границы применимости формул |
+
+Входные параметры:
+
+| Поле | По умолчанию | Описание |
+|---|---|---|
+| `tank_volume` | — | объём РВС по каталогу: 700 / 2000 / 5000 / 10000 / 20000 / 30000 м³ |
+| `clearance_l` | `3.0` | межстенное расстояние, м (1.5…3.0) |
+| `crest_width_b` | `1.0` | вылет козырька, м (0.5…1.5) |
+| `plain_wall_height` | `null` | высота стенки без козырька, м; `null` → 1.1·h0 |
+| `scenarios` | `["plain", "gwk"]` | сценарии: без козырька / с ГВК |
+
+Ответ `CalculationResponse`:
+
+```json
+{
+  "input": {"tank_volume": 5000, "clearance_l": 3.0, "crest_width_b": 1.0},
+  "result": {"tank_volume": 5000, "tank_diameter_m": 20.92, "variants": [], "wave": {}},
+  "variants": [
+    {
+      "id": "no-canopy",
+      "title": "Без козырька",
+      "scenario": "plain",
+      "isImportant": false,
+      "items": [{"title": "Доля перелива", "value": "0 %"}]
+    }
+  ],
+  "charts": [{"title": "...", "datasets": [{"label": "l = 3.0 м", "data": [[0.7, 10.03]]}]}],
+  "recommended_variant": "gwk"
+}
+```
+
+`variants` и `charts` можно передавать фронтенду как `CalculationResult` без
+преобразований: лишние поля (`input`, `result`, `scenario`, оси графика)
+игнорируются типами TypeScript.
+
+В `/api/calculations/from-form` объём РВС извлекается из `objectType`
+(«РВС-5000 · 5 000 м³») или из `objectVolume`; отсутствующие `clearanceL` и
+`crestWidthB` принимают значения по умолчанию.
+
+### Графики
+
+| Метод | Путь | Описание |
+|---|---|---|
+| `POST` | `/api/charts/overflow` | `Q(h_зс/h0)` — по одной кривой на каждый `l` |
+| `POST` | `/api/charts/wave` | траектория фронта волны и высота потока |
+| `POST` | `/api/charts` | перелив + траектория волны одним набором |
+
+Пример запроса и ответа:
+
+```json
+POST /api/charts/overflow
+{"tank_volume": 5000, "clearance_values": [3.0], "height_ratios": [0.7, 0.97, 1.1]}
+```
+
+```json
+{
+  "title": "Доля перелива от высоты стенки",
+  "datasets": [
+    {"label": "l = 3.0 м", "data": [[0.7, 10.03], [0.97, 0.0], [1.1, 0.0]]}
+  ]
+}
+```
+
+Значения рассчитаны по формуле (4.1) Швыркова с коэффициентами из
+`app/core/constants.py` — теми же, что использует стратегия `PlainWall`.
+
+### История расчётов проекта
+
+| Метод | Путь | Описание |
+|---|---|---|
+| `POST` | `/api/projects/{id}/calculations` | выполнить и сохранить расчёт |
+| `POST` | `/api/projects/{id}/calculations/from-form` | расчёт по форме и сохранение |
+| `GET` | `/api/projects/{id}/calculations` | список с пагинацией |
+| `GET` | `/api/projects/{id}/calculations/{calc_id}` | сохранённый расчёт |
+| `GET` | `/api/projects/{id}/calculations/{calc_id}/charts` | его графики |
+| `DELETE` | `/api/projects/{id}/calculations/{calc_id}` | удалить расчёт |
+
+Доступ — только владельцу проекта; чужие проекты и расчёты возвращают `404`.
+
 ### Формат ошибок
 
-- `422` — ошибка валидации Pydantic (`detail` — список с путём до поля);
+- `422` — ошибка валидации Pydantic (`detail` — список с путём до поля) или
+  выход параметра за границы применимости формул (`code: "domain_range_error"`);
 - `400` — бизнес-правило (например, неверный текущий пароль);
 - `401` — нет/просрочен токен или неверные учётные данные;
 - `403` — нет прав или учётная запись деактивирована;
@@ -238,6 +340,21 @@ curl -X POST http://127.0.0.1:8000/api/projects `
 
 # 4. История версий проекта
 curl http://127.0.0.1:8000/api/projects/1/history -H "Authorization: Bearer <TOKEN>"
+
+# 5. Расчёт (без авторизации)
+curl -X POST http://127.0.0.1:8000/api/calculations `
+  -H "Content-Type: application/json" `
+  -d '{"tank_volume":5000,"clearance_l":3.0,"crest_width_b":1.0}'
+
+# 6. График перелива с нужными точками
+curl -X POST http://127.0.0.1:8000/api/charts/overflow `
+  -H "Content-Type: application/json" `
+  -d '{"tank_volume":5000,"clearance_values":[3.0],"height_ratios":[0.7,0.97,1.1]}'
+
+# 7. Расчёт по форме главной страницы
+curl -X POST http://127.0.0.1:8000/api/calculations/from-form `
+  -H "Content-Type: application/json" `
+  -d '{"objectType":"РВС-5000 · 5 000 м³","fillLevel":100}'
 ```
 
 ## Тесты
@@ -246,22 +363,52 @@ curl http://127.0.0.1:8000/api/projects/1/history -H "Authorization: Bearer <TOK
 .venv\Scripts\python.exe -m pytest
 ```
 
+Если при запуске появляется `StarletteDeprecationWarning: Using httpx with
+starlette.testclient is deprecated`, доустановите `httpx2` (уже есть в
+`requirements-dev.txt`):
+
+```powershell
+.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+```
+
 Покрыто: регистрация и вход, валидация пользователя, уникальность email и
 username, JWT (в том числе просроченный и подписанный чужим ключом), роли и
 деактивация, CRUD проектов, изоляция проектов разных пользователей, история
 версий, восстановление версии, каскадное удаление, диапазоны и логические
-проверки исходных данных.
+проверки исходных данных, расчёты и точные значения кривой перелива, адаптер
+формы главной страницы, все эндпоинты графиков, справочник, сохранение и
+изоляция истории расчётов.
 
-## Интеграция с вычислительным модулем
+Тесты самого вычислительного ядра (ветка `feature/backend-calculations`)
+запускаются отдельно и тоже проходят: 578 тестов.
 
-Вычислительное ядро не реализуется в этом сервисе. Точка стыковки:
+## Совместимость с ветками команды
 
-1. Вычислительный модуль получает проверенный снимок:
-   `GET /api/projects/{id}/history/{version}` → поле `input_data`
-   (структура — `app/schemas/inputs.py::ProjectInputData`).
-2. Результаты расчёта рекомендуется сохранять отдельной таблицей
-   (`calculations`: `project_id`, `version_id`, `results` JSON, `created_at`)
-   и добавить роутер `app/routers/calculations.py` по образцу существующих.
-3. Валидация исходных данных уже выполнена API, повторно проверять их не
-   нужно — достаточно валидировать границы применимости математической модели.
+### `feature/backend-calculations`
+
+- Код ядра перенесён в `app/core/` **без изменений**: `run_engine(InputData)`
+  остаётся единственной точкой входа, все формулы и константы находятся в
+  `app/core/constants.py`.
+- API не дублирует расчётную логику: `app/services/calculations.py` только
+  преобразует Pydantic-схемы в `InputData` и сериализует `ResultData`.
+- Ошибки ядра `DomainRangeError` прозрачно преобразуются в HTTP `422` с
+  `code: "domain_range_error"` и понятным русским сообщением.
+- Исходные данные проекта (`app/schemas/inputs.py`) остаются отдельным
+  контрактом: это данные ТЗ (объект, жидкость, среда), а не параметры ядра
+  (`tank_volume`, `clearance_l`, `crest_width_b`).
+
+### `feature/main-page`
+
+- `variants` — это `ResultBlock[]`: `id`, `title`, `isImportant`, `items`
+  (`ResultItem[]`: `title`, `value`). Рекомендуемый ядром вариант отмечен
+  `isImportant: true` (как «Рекомендуемый» в интерфейсе).
+- `charts` — это `ChartBlock[]`: `title` и `datasets` из `ChartDataset`, где
+  каждая точка — массив `[x, y]` чисел, как ожидает `chart.js`.
+- Адаптер `/api/calculations/from-form` принимает поля `FormValues` в
+  camelCase (`objectType`, `objectVolume`, `fillLevel` и т.д.), поэтому
+  фронтенд может заменить вызов `calculate()` из `mock-api.ts` на запрос
+  к API без изменения типов.
+
+Дополнительные поля ответа (`input`, `result`, `scenario`, `xAxis`, `yAxis`)
+не конфликтуют с интерфейсными типами — TypeScript их просто проигнорирует.
 ```

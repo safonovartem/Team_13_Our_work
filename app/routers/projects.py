@@ -20,17 +20,9 @@ from app.schemas.projects import (
     ProjectVersionCreate,
     ProjectVersionRead,
 )
+from app.services.project_access import get_owned_project as _get_owned_project
+
 router = APIRouter(prefix="/projects", tags=["Проекты"])
-
-
-def _get_owned_project(
-    connection: sqlite3.Connection, project_id: int, user_id: int
-) -> dict:
-    project = projects_repo.get_project_for_user(connection, project_id, user_id)
-    if project is None:
-        # Чужие проекты также отдают 404, чтобы не раскрывать их существование.
-        raise NotFoundError("Проект не найден")
-    return project
 
 
 def _metadata_changes(payload: ProjectUpdate) -> dict:

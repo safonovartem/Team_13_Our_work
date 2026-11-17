@@ -1,3 +1,3 @@
-"""Tank Safety Platform — backend (API, users, projects, validation)."""
+"""Tank Safety Platform — backend (API, users, projects, calculations)."""
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

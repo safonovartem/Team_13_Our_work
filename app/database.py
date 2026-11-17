@@ -54,6 +54,24 @@ CREATE TABLE IF NOT EXISTS project_versions (
 
 CREATE INDEX IF NOT EXISTS idx_project_versions_project_id
     ON project_versions(project_id);
+
+CREATE TABLE IF NOT EXISTS calculations (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id          INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    user_id             INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    input_data          TEXT    NOT NULL,
+    form_data           TEXT,
+    result_data         TEXT    NOT NULL,
+    charts              TEXT    NOT NULL,
+    recommended_variant TEXT    NOT NULL
+                                CHECK (recommended_variant IN ('plain', 'gwk')),
+    created_at          TEXT    NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_calculations_project_id
+    ON calculations(project_id);
+CREATE INDEX IF NOT EXISTS idx_calculations_user_id
+    ON calculations(user_id);
 """
 
 

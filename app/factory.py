@@ -15,10 +15,19 @@ from fastapi.responses import JSONResponse
 
 from app import __version__
 from app.config import Settings, get_settings
+from app.core.exceptions import DomainRangeError
 from app.database import Database
 from app.errors import DomainError
 from app.repositories import users as users_repo
-from app.routers import auth, projects, users
+from app.routers import (
+    auth,
+    catalog,
+    charts,
+    calculations,
+    project_calculations,
+    projects,
+    users,
+)
 from app.security import hash_password
 from app.validators import validate_email, validate_password_strength
 
@@ -31,10 +40,14 @@ DESCRIPTION = """
 * регистрация, аутентификация (JWT) и валидация пользователей;
 * проекты пользователя и история версий исходных данных;
 * валидация исходных параметров (объект, жидкость, окружающая среда)
-  согласно ТЗ.
+  согласно ТЗ;
+* расчёты на базе вычислительного ядра ``app.core`` (ветка
+  ``feature/backend-calculations``) и история расчётов проекта;
+* справочник типоразмеров РВС и эндпоинты графиков в формате Chart.js
+  (``ChartBlock`` / ``ChartDataset`` из ``feature/main-page``).
 
-Вычислительное ядро в этот сервис не входит: другой модуль получает
-проверенный снимок исходных данных из истории проекта.
+Публичные эндпоинты ``/api/calculations``, ``/api/charts`` и ``/api/catalog``
+не требуют авторизации; история расчётов доступна владельцу проекта.
 """
 
 
@@ -68,6 +81,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth.router, prefix=API_PREFIX)
     app.include_router(users.router, prefix=API_PREFIX)
     app.include_router(projects.router, prefix=API_PREFIX)
+    app.include_router(project_calculations.router, prefix=API_PREFIX)
+    app.include_router(calculations.router, prefix=API_PREFIX)
+    app.include_router(charts.router, prefix=API_PREFIX)
+    app.include_router(catalog.router, prefix=API_PREFIX)
 
     @app.get("/health", tags=["Служебные"], summary="Проверка работоспособности")
     def health() -> dict[str, str]:
@@ -93,6 +110,16 @@ def _register_error_handlers(app: FastAPI) -> None:
         if exc.field is not None:
             content["field"] = exc.field
         return JSONResponse(status_code=exc.status_code, content=content)
+
+    @app.exception_handler(DomainRangeError)
+    async def domain_range_error_handler(
+        request: Request, exc: DomainRangeError
+    ) -> JSONResponse:
+        """Ошибки границ применимости формул — как ошибки валидации (422)."""
+        return JSONResponse(
+            status_code=422,  # ошибка валидации входных параметров
+            content={"detail": str(exc), "code": "domain_range_error"},
+        )
 
 
 def _ensure_bootstrap_admin(settings: Settings, database: Database) -> None:

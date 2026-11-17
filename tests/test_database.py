@@ -38,7 +38,7 @@ def test_init_schema_creates_tables_and_is_idempotent(database):
                 "SELECT name FROM sqlite_master WHERE type = 'table'"
             )
         }
-    assert {"users", "projects", "project_versions"} <= names
+    assert {"users", "projects", "project_versions", "calculations"} <= names
 
 
 def test_foreign_keys_are_enabled(database):
