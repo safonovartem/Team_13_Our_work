@@ -4,6 +4,7 @@ import type {
   FormValues,
   ResultBlock,
   ChartBlock,
+  WaveResult,
 } from './types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -16,7 +17,7 @@ interface FromFormRequest {
   clearanceL?: number
   crestWidthB?: number
   plainWallHeight?: number
-  scenarios?: 'plain'[]
+  scenarios?: ('plain' | 'gwk')[]
 }
 
 export function toRequest(form: FormValues): FromFormRequest {
@@ -26,7 +27,7 @@ export function toRequest(form: FormValues): FromFormRequest {
     clearanceL: toOptionalNumber(form.clearanceL),
     crestWidthB: toOptionalNumber(form.crestWidthB),
     plainWallHeight: toOptionalNumber(form.plainWallHeight),
-    scenarios: ['plain'],
+    scenarios: ['plain', 'gwk'],
   }
 }
 
@@ -60,12 +61,33 @@ export function toCalculationResult(raw: any): CalculationResult {
           label: d.label,
           data: d.data as [number, number][],
         })),
+        xAxis: c.xAxis
+          ? { title: c.xAxis.title, unit: c.xAxis.unit }
+          : undefined,
+        yAxis: c.yAxis
+          ? { title: c.yAxis.title, unit: c.yAxis.unit }
+          : undefined,
       }),
     ),
+    wave: raw.result?.wave as WaveResult | undefined,
+    recommendedVariant:
+      raw.recommended_variant ?? raw.result?.recommended_variant,
   }
 }
 
-// ─── calculate: публичная точка входа ───────────────
+export class ApiError extends Error {
+  readonly status: number
+  readonly code?: string
+  readonly field?: string
+
+  constructor(status: number, message: string, code?: string, field?: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+    this.field = field
+  }
+}
 
 export async function calculate(form: FormValues): Promise<CalculationResult> {
   const response = await fetch(`${BASE_URL}/api/calculations/from-form`, {
@@ -76,11 +98,28 @@ export async function calculate(form: FormValues): Promise<CalculationResult> {
 
   if (!response.ok) {
     const body = await response.json().catch(() => null)
+
+    // 422 от Pydantic: detail — массив объектов с loc/msg
+    if (Array.isArray(body?.detail)) {
+      const first = body.detail[0]
+      const field = Array.isArray(first?.loc)
+        ? first.loc[first.loc.length - 1]
+        : undefined
+      throw new ApiError(
+        response.status,
+        first?.msg ?? 'Ошибка валидации',
+        body.code,
+        field,
+      )
+    }
+
+    // доменная ошибка: { detail: string, code }
     const message =
       typeof body?.detail === 'string'
         ? body.detail
         : `Ошибка расчёта (${response.status})`
-    throw new Error(message)
+
+    throw new ApiError(response.status, message, body?.code, body?.field)
   }
 
   return toCalculationResult(await response.json())

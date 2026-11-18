@@ -14,14 +14,24 @@ export type ResultBlock = {
   items: ResultItem[]
 }
 
+// название осей графиков
+export type ChartAxis = {
+  title?: string
+  unit?: string
+}
+
 export type ChartBlock = {
   title: string
   datasets: ChartDataset<'line', ([number, number] | Point | null)[]>[]
+  xAxis?: ChartAxis
+  yAxis?: ChartAxis
 }
 
 export type CalculationResult = {
   variants: ResultBlock[]
   charts: ChartBlock[]
+  wave?: WaveResult
+  recommendedVariant?: string
 }
 
 // Форма параметров
@@ -88,3 +98,32 @@ export const TANK_TYPES = [
 export const TANK_MATERIALS = ['Сталь'] as const
 
 export const LIQUID_TYPES = ['Вода'] as const
+
+// Перелив воды
+
+export type WavePoint = {
+  time_s: number
+  distance_m: number
+  wave_height_m: number
+}
+
+export type WaveResult = {
+  initial_velocity_ms: number
+  froude_number: number
+  strouhal_number: number
+  reynolds_number: number
+  scale_factor: number
+  trajectory: WavePoint[]
+}
+
+// расширяем CalculationResult — но сервер кладёт wave внутрь result,
+// поэтому добавим отдельный тип для «сырого» ответа
+export type RawCalculationResponse = {
+  variants: ResultBlock[]
+  charts: ChartBlock[]
+  result?: {
+    wave?: WaveResult
+    recommended_variant?: string
+  }
+  recommended_variant?: string
+}

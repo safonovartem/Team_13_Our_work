@@ -16,6 +16,7 @@ interface PropertiesPanelProps {
   onChange: (next: FormValues) => void;
   onSubmit: (values: FormValues) => void;
   onReset: () => void;
+  loading?: boolean;
 }
 
 export function PropertiesPanel({
@@ -23,6 +24,7 @@ export function PropertiesPanel({
   onChange,
   onReset,
   onSubmit,
+  loading = false,
 }: PropertiesPanelProps) {
   const setField = (name: FieldName) => (raw: string | number | null) =>
     onChange({ ...values, [name]: raw });
@@ -67,7 +69,7 @@ export function PropertiesPanel({
               />
             </SignedFormField>
             <SignedFormField
-              title="Вылет горизонтального козырька"
+              title="Высота защитной стенки"
               valueNoteMessage="Необязательное значение"
             >
               <PropertyValueInputField
@@ -81,10 +83,15 @@ export function PropertiesPanel({
         </form>
       </section>
       <div className={styles.buttons}>
-        <button type="reset" className="transparent" form="properties-form">
+        <button
+          type="reset"
+          className="transparent"
+          form="properties-form"
+          disabled={loading}
+        >
           Сбросить
         </button>
-        <button type="submit" form="properties-form">
+        <button type="submit" form="properties-form" disabled={loading}>
           Рассчитать
         </button>
       </div>

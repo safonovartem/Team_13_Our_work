@@ -1,0 +1,32 @@
+.canvas {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  background: var(--panels-bg);
+  border-radius: 12px;
+}
+
+.ground {
+  stroke: var(--info-text-color);
+  stroke-width: 1;
+}
+
+.tank {
+  fill: #8aa0b5;
+  opacity: 0.6;
+}
+
+.wall {
+  fill: #4a5a6a;
+}
+
+.wave {
+  fill: #2f80ed;
+  opacity: 0.85;
+}
+
+.trajectory {
+  stroke: #2f80ed;
+  stroke-dasharray: 4 4;
+  opacity: 0.5;
+}
