@@ -1,5 +1,5 @@
 // App.tsx
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Header } from './components/header/component';
 import { Layout } from './components/layout/component';
 import { PropertiesPanel } from './components/properties-panel/component';
@@ -13,12 +13,45 @@ import { ToastStack } from './components/toast-stack/component';
 import { calculate, ApiError } from './api';
 import { useToasts } from './hooks/use-toasts';
 import { FormValues, EMPTY_FORM, CalculationResult } from './types';
+import { WaveScene } from './components/result-wave-canvas/component';
 
 export function App() {
   const [form, setForm] = useState<FormValues>(EMPTY_FORM);
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const { toasts, push, dismiss } = useToasts();
+
+  const waveScene = useMemo(() => {
+    if (
+      !result?.wave ||
+      !result.tankDiameterM ||
+      !result.liquidLevelH0M ||
+      result.clearanceL === undefined
+    ) {
+      return null;
+    }
+    const meta =
+      result.variantMeta?.find(
+        (m) => m.scenario === result.recommendedVariant,
+      ) ?? result.variantMeta?.[0];
+    if (!meta) return null;
+
+    const trajectory = result.wave.trajectory ?? [];
+    return {
+      wave: result.wave,
+      meta,
+      scene: {
+        tankDiameterM: result.tankDiameterM,
+        liquidLevelH0M: result.liquidLevelH0M,
+        clearanceM: result.clearanceL,
+        wallHeightM: meta.wallHeightM,
+        crestWidthM: meta.crestWidthM,
+        scenario: meta.scenario,
+        maxDistanceM: Math.max(0, ...trajectory.map((p) => p.distance_m)),
+        maxWaveHeightM: Math.max(0, ...trajectory.map((p) => p.wave_height_m)),
+      } satisfies WaveScene,
+    };
+  }, [result]);
 
   const handleSubmit = async (values: FormValues) => {
     setLoading(true);
@@ -90,13 +123,18 @@ export function App() {
               ))}
             </ResultSection>
 
-            {result.wave && (
+            {waveScene && (
               <ResultSection
                 title="Перелив через защитную стенку"
                 layout="single"
               >
-                <ResultBlock title="Анимация фронта волны">
-                  <ResultWaveAnimation wave={result.wave} />
+                <ResultBlock
+                  title={`Сценарий: ${waveScene.meta.scenario === 'gwk' ? 'с ГВК' : 'без козырька'}`}
+                >
+                  <ResultWaveAnimation
+                    wave={waveScene.wave}
+                    scene={waveScene.scene}
+                  />
                 </ResultBlock>
               </ResultSection>
             )}

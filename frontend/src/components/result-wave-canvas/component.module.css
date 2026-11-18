@@ -1,32 +1,42 @@
 .canvas {
   width: 100%;
-  max-width: 480px;
+  max-width: 720px;
   height: auto;
   background: var(--panels-bg);
   border-radius: 12px;
 }
-
 .ground {
   stroke: var(--info-text-color);
   stroke-width: 1;
 }
-
 .tank {
   fill: #8aa0b5;
-  opacity: 0.6;
+  opacity: 0.55;
 }
-
 .wall {
   fill: #4a5a6a;
 }
-
+.crest {
+  fill: #2f80ed;
+  opacity: 0.8;
+}
 .wave {
   fill: #2f80ed;
-  opacity: 0.85;
+  opacity: 0.9;
 }
-
+.waveOverflow {
+  fill: #d64545;
+}
 .trajectory {
   stroke: #2f80ed;
   stroke-dasharray: 4 4;
   opacity: 0.5;
+}
+.label {
+  font-size: 11px;
+  fill: var(--info-text-color);
+}
+.caption {
+  font-size: 12px;
+  fill: var(--info-text-color);
 }

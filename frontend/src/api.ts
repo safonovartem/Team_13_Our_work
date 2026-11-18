@@ -1,10 +1,10 @@
-// src/api.ts
 import type {
   CalculationResult,
   FormValues,
   ResultBlock,
   ChartBlock,
   WaveResult,
+  VariantMeta,
 } from './types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -42,6 +42,19 @@ function toOptionalNumber(
 // ─── toCalculationResult: сырой ответ → ваш тип ─────
 
 export function toCalculationResult(raw: any): CalculationResult {
+  const rawResult = raw.result ?? {}
+  const rawInput = raw.input ?? {}
+
+  const variantMeta: VariantMeta[] = (rawResult.variants ?? []).map(
+    (v: any): VariantMeta => ({
+      scenario: v.scenario_type === 'gwk' ? 'gwk' : 'plain',
+      wallHeightM: Number(v.wall_height_m ?? 0),
+      crestWidthM: Number(v.crest_width_m ?? 0),
+      overflowPct: Number(v.overflow_pct ?? 0),
+      safetyScore: Number(v.safety_score ?? 0),
+    }),
+  )
+
   return {
     variants: (raw.variants ?? []).map(
       (v: any): ResultBlock => ({
@@ -62,16 +75,21 @@ export function toCalculationResult(raw: any): CalculationResult {
           data: d.data as [number, number][],
         })),
         xAxis: c.xAxis
-          ? { title: c.xAxis.title, unit: c.xAxis.unit }
+          ? { title: c.xAxis.title, unit: c.xAxis.unit ?? undefined }
           : undefined,
         yAxis: c.yAxis
-          ? { title: c.yAxis.title, unit: c.yAxis.unit }
+          ? { title: c.yAxis.title, unit: c.yAxis.unit ?? undefined }
           : undefined,
       }),
     ),
-    wave: raw.result?.wave as WaveResult | undefined,
+    wave: rawResult.wave as WaveResult | undefined,
     recommendedVariant:
-      raw.recommended_variant ?? raw.result?.recommended_variant,
+      raw.recommended_variant ?? rawResult.recommended_variant,
+    // для сцены
+    tankDiameterM: rawResult.tank_diameter_m,
+    liquidLevelH0M: rawResult.liquid_level_h0,
+    clearanceL: rawInput.clearance_l,
+    variantMeta,
   }
 }
 

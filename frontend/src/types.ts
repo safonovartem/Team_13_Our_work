@@ -27,13 +27,6 @@ export type ChartBlock = {
   yAxis?: ChartAxis
 }
 
-export type CalculationResult = {
-  variants: ResultBlock[]
-  charts: ChartBlock[]
-  wave?: WaveResult
-  recommendedVariant?: string
-}
-
 // Форма параметров
 
 export type FieldName =
@@ -126,4 +119,25 @@ export type RawCalculationResponse = {
     recommended_variant?: string
   }
   recommended_variant?: string
+}
+
+export type VariantMeta = {
+  scenario: 'plain' | 'gwk'
+  wallHeightM: number
+  crestWidthM: number
+  overflowPct: number
+  safetyScore: number
+}
+
+export type CalculationResult = {
+  variants: ResultBlock[]
+  charts: ChartBlock[]
+  wave?: WaveResult
+  recommendedVariant?: string
+
+  // для сцены
+  tankDiameterM?: number
+  liquidLevelH0M?: number
+  clearanceL?: number
+  variantMeta?: VariantMeta[]
 }

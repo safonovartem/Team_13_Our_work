@@ -1,37 +1,108 @@
+// components/result-wave-canvas/component.tsx
 import type { WavePoint } from '../../types';
 import styles from './component.module.css';
 
-interface ResultWaveCanvasProps {
-  /** текущий кадр */
-  point: WavePoint;
-  /** максимальные значения для нормализации — считаются по всему trajectory */
-  maxDistance: number;
-  maxHeight: number;
+export interface WaveScene {
+  tankDiameterM: number;
+  liquidLevelH0M: number;
+  clearanceM: number;
+  wallHeightM: number;
+  crestWidthM: number;
+  scenario: 'plain' | 'gwk';
+  maxDistanceM: number;
+  maxWaveHeightM: number;
 }
 
-const WIDTH = 480;
-const HEIGHT = 200;
-const PADDING = 24;
+interface ResultWaveCanvasProps {
+  point: WavePoint;
+  scene: WaveScene;
+}
 
-export function ResultWaveCanvas({
-  point,
-  maxDistance,
-  maxHeight,
-}: ResultWaveCanvasProps) {
-  // нормализация в пиксели
-  const x =
-    PADDING +
-    (maxDistance > 0 ? point.distance_m / maxDistance : 0) *
-      (WIDTH - PADDING * 2);
-  const h = maxHeight > 0 ? point.wave_height_m / maxHeight : 0;
-  const y = HEIGHT - PADDING - h * (HEIGHT - PADDING * 2);
+const WIDTH = 720;
+const HEIGHT = 360;
+const PADDING = 32;
+
+export function ResultWaveCanvas({ point, scene }: ResultWaveCanvasProps) {
+  const {
+    tankDiameterM,
+    liquidLevelH0M,
+    clearanceM,
+    wallHeightM,
+    crestWidthM,
+    scenario,
+    maxDistanceM,
+    maxWaveHeightM,
+  } = scene;
+
+  // ─── единая метрическая система ───
+  const worldWidthM =
+    tankDiameterM + clearanceM + Math.max(maxDistanceM, clearanceM) + 1;
+  const worldHeightM =
+    Math.max(liquidLevelH0M, wallHeightM, maxWaveHeightM) + 1;
+
+  const scale = Math.min(
+    (WIDTH - 2 * PADDING) / worldWidthM,
+    (HEIGHT - 2 * PADDING) / worldHeightM,
+  );
+
+  const toPx = (xM: number, yM: number) => ({
+    x: PADDING + xM * scale,
+    y: HEIGHT - PADDING - yM * scale,
+  });
+
+  // ─── резервуар ───
+  const tankBL = toPx(0, 0);
+  const tankTR = toPx(tankDiameterM, liquidLevelH0M);
+  const tankRect = {
+    x: tankBL.x,
+    y: tankTR.y,
+    width: tankTR.x - tankBL.x,
+    height: tankBL.y - tankTR.y,
+  };
+
+  // ─── стенка ───
+  const wallXM = tankDiameterM + clearanceM;
+  const wallBL = toPx(wallXM, 0);
+  const wallTR = toPx(wallXM, wallHeightM);
+  const wallRect = {
+    x: wallBL.x - 4,
+    y: wallTR.y,
+    width: 8,
+    height: wallBL.y - wallTR.y,
+  };
+
+  // ─── козырёк (только gwk) ───
+  const crestRect =
+    scenario === 'gwk' && crestWidthM > 0
+      ? (() => {
+          const right = toPx(wallXM, wallHeightM);
+          const left = toPx(wallXM - crestWidthM, wallHeightM);
+          return {
+            x: left.x,
+            y: right.y - 3,
+            width: Math.max(1, right.x - left.x),
+            height: 6,
+          };
+        })()
+      : null;
+
+  // ─── волна ───
+  const waveXM = tankDiameterM + point.distance_m;
+  const waveYM = point.wave_height_m;
+  const reachedWall = waveXM >= wallXM;
+  const overflows = reachedWall && waveYM > wallHeightM;
+  const displayWaveXM = reachedWall && !overflows ? wallXM : waveXM;
+  const wavePx = toPx(displayWaveXM, waveYM);
+
+  const startPx = toPx(tankDiameterM, liquidLevelH0M);
+  const radius = Math.max(3, Math.min(12, waveYM * scale * 0.15));
 
   return (
     <svg
       className={styles.canvas}
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
       role="img"
-      aria-label="Анимация перелива через защитную стенку"
+      aria-label="Схема перелива через защитную стенку"
     >
       {/* земля */}
       <line
@@ -42,36 +113,57 @@ export function ResultWaveCanvas({
         className={styles.ground}
       />
 
-      {/* резервуар (слева) */}
-      <rect
-        x={PADDING}
-        y={HEIGHT - PADDING - 80}
-        width={60}
-        height={80}
-        className={styles.tank}
-        rx={4}
+      {/* резервуар */}
+      <rect {...tankRect} className={styles.tank} rx={4} />
+      <text
+        x={tankRect.x + tankRect.width / 2}
+        y={tankRect.y - 6}
+        textAnchor="middle"
+        className={styles.label}
+      >
+        РВС
+      </text>
+
+      {/* стенка */}
+      <rect {...wallRect} className={styles.wall} />
+      <text
+        x={wallRect.x + wallRect.width / 2}
+        y={wallRect.y - 6}
+        textAnchor="middle"
+        className={styles.label}
+      >
+        {wallHeightM.toFixed(2)} м
+      </text>
+
+      {/* козырёк */}
+      {crestRect && <rect {...crestRect} className={styles.crest} />}
+
+      {/* пунктир (только пока волна не дошла до стенки) */}
+      {!reachedWall && (
+        <line
+          x1={startPx.x}
+          y1={startPx.y}
+          x2={wavePx.x}
+          y2={wavePx.y}
+          className={styles.trajectory}
+        />
+      )}
+
+      {/* волна */}
+      <circle
+        cx={wavePx.x}
+        cy={wavePx.y}
+        r={radius}
+        className={`${styles.wave} ${overflows ? styles.waveOverflow : ''}`}
       />
 
-      {/* защитная стенка (посередине) */}
-      <rect
-        x={WIDTH / 2 - 4}
-        y={HEIGHT - PADDING - 60}
-        width={8}
-        height={60}
-        className={styles.wall}
-      />
-
-      {/* фронт волны — вертикальная «капля» */}
-      <circle cx={x} cy={y} r={Math.max(3, h * 18)} className={styles.wave} />
-
-      {/* пунктир траектории до текущего кадра */}
-      <line
-        x1={PADDING + 60}
-        y1={HEIGHT - PADDING - 80}
-        x2={x}
-        y2={y}
-        className={styles.trajectory}
-      />
+      {/* подпись */}
+      <text x={PADDING} y={HEIGHT - 6} className={styles.caption}>
+        l = {clearanceM} м · h₀ = {liquidLevelH0M} м ·{' '}
+        {scenario === 'gwk' ? 'ГВК' : 'без козырька'}
+      </text>
     </svg>
   );
 }
+
+export type { ResultWaveCanvasProps };

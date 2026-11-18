@@ -1,18 +1,22 @@
 // components/result-wave-animation/component.tsx
 import { useEffect, useMemo, useState } from 'react';
 import type { WaveResult } from '../../types';
-import { ResultWaveCanvas } from '../result-wave-canvas/component';
+import {
+  ResultWaveCanvas,
+  type WaveScene,
+} from '../result-wave-canvas/component';
 import { ResultWaveStats } from '../result-wave-stats/component';
 import styles from './component.module.css';
 
 interface ResultWaveAnimationProps {
   wave: WaveResult;
-  /** длительность одного кадра, мс */
+  scene: WaveScene;
   frameDuration?: number;
 }
 
 export function ResultWaveAnimation({
   wave,
+  scene,
   frameDuration = 200,
 }: ResultWaveAnimationProps) {
   const trajectory = wave.trajectory ?? [];
@@ -21,18 +25,18 @@ export function ResultWaveAnimation({
   const [frame, setFrame] = useState(0);
   const [playing, setPlaying] = useState(false);
 
-  // нормализация — по всему trajectory, чтобы масштаб не «прыгал»
-  const { maxDistance, maxHeight } = useMemo(() => {
-    let md = 0;
-    let mh = 0;
+  // maxDistance/maxHeight теперь считаются в App и приходят в scene,
+  // но на случай, если scene неполный — подстрахуемся
+  const safeScene = useMemo<WaveScene>(() => {
+    let md = scene.maxDistanceM;
+    let mh = scene.maxWaveHeightM;
     for (const p of trajectory) {
       if (p.distance_m > md) md = p.distance_m;
       if (p.wave_height_m > mh) mh = p.wave_height_m;
     }
-    return { maxDistance: md, maxHeight: mh };
-  }, [trajectory]);
+    return { ...scene, maxDistanceM: md, maxWaveHeightM: mh };
+  }, [scene, trajectory]);
 
-  // цикл воспроизведения
   useEffect(() => {
     if (!playing || total <= 1) return;
     const id = setInterval(() => {
@@ -47,7 +51,6 @@ export function ResultWaveAnimation({
     return () => clearInterval(id);
   }, [playing, total, frameDuration]);
 
-  // нет кадров — нечего показывать
   if (total === 0) {
     return <p className={styles.empty}>Данных для анимации нет</p>;
   }
@@ -56,11 +59,7 @@ export function ResultWaveAnimation({
 
   return (
     <div className={styles.wrapper}>
-      <ResultWaveCanvas
-        point={current}
-        maxDistance={maxDistance}
-        maxHeight={maxHeight}
-      />
+      <ResultWaveCanvas point={current} scene={safeScene} />
 
       <div className={styles.controls}>
         <button
@@ -96,7 +95,7 @@ export function ResultWaveAnimation({
       </div>
 
       <div className={styles.meta}>
-        <span>t = {current.time_s.toFixed(2)} с</span>
+        <span>t = {current.time_s.toFixed(3)} с</span>
         <span>расстояние = {current.distance_m.toFixed(2)} м</span>
         <span>высота = {current.wave_height_m.toFixed(2)} м</span>
       </div>
