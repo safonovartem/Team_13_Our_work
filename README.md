@@ -1,6 +1,7 @@
 # Tank Safety Platform — backend integration
 
 Прототип системы «Tank Safety Platform» (ООО «АралИнжиниринг», команда 13, KAIZEN.AI):
+
 Backend:
 
 - Python 3.11+
@@ -28,13 +29,13 @@ git clone -b feature/backend-integration-for-prototype https://github.com/safono
 #### 2.1. Создать виртуальное окружение
 
 ```powershell
+cd backend
 python -m venv .venv
 ```
 
 #### 2.2. Запустить 
 
 ```powershell
-cd backend
 .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
